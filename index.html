@@ -20,7 +20,7 @@
             font-family: 'Inter', sans-serif;
             background: var(--darker);
             color: #e2e8f0;
-            overflow-x: hidden;
+            overflow: hidden;
         }
         
         .font-display { font-family: 'Cinzel', serif; }
@@ -56,15 +56,60 @@
         
         /* Glassmorphism */
         .glass {
-            background: rgba(15, 23, 42, 0.7);
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .glass-panel {
-            background: rgba(30, 41, 59, 0.6);
+            background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Canvas Transformations */
+        #canvasWrapper {
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+        
+        .canvas-container {
+            background-image: 
+                radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+        
+        /* Card Styles */
+        .story-card {
+            position: absolute;
+            width: 280px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: grab;
+            user-select: none;
+        }
+        
+        .story-card:active {
+            cursor: grabbing;
+        }
+        
+        .story-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+            z-index: 50;
+        }
+        
+        .story-card.selected {
+            ring: 2px solid var(--primary);
+            box-shadow: 0 0 0 2px var(--primary), 0 20px 40px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Connection Lines */
+        .connection-line {
+            stroke: var(--primary);
+            stroke-width: 2;
+            fill: none;
+            opacity: 0.6;
+            pointer-events: none;
         }
         
         /* Custom Scrollbar */
@@ -80,143 +125,179 @@
             border-radius: 4px;
         }
         
-        /* Timeline */
-        .timeline-line {
-            background: linear-gradient(to bottom, var(--primary), var(--secondary));
-        }
-        
-        /* Card Hover Effects */
-        .story-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .story-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
-        }
-        
-        /* Music Visualizer Bars */
-        .music-bar {
-            width: 4px;
-            background: linear-gradient(to top, var(--primary), var(--secondary));
-            border-radius: 2px;
-            animation: equalize 1s ease-in-out infinite;
-        }
-        
-        @keyframes equalize {
-            0%, 100% { height: 20%; }
-            50% { height: 100%; }
-        }
-        
-        .music-bar:nth-child(2) { animation-delay: 0.1s; }
-        .music-bar:nth-child(3) { animation-delay: 0.2s; }
-        .music-bar:nth-child(4) { animation-delay: 0.3s; }
-        .music-bar:nth-child(5) { animation-delay: 0.4s; }
-        
         /* Modal Animation */
         .modal-enter {
             animation: modalSlide 0.3s ease-out;
         }
         @keyframes modalSlide {
-            from { opacity: 0; transform: scale(0.9) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
         
-        /* Connection Lines */
-        .connection-line {
-            stroke: var(--primary);
-            stroke-width: 2;
-            fill: none;
-            stroke-dasharray: 5,5;
-            animation: dash 20s linear infinite;
-        }
-        @keyframes dash {
-            to { stroke-dashoffset: -100; }
+        /* Timeline */
+        .timeline-item {
+            position: relative;
+            padding-left: 3rem;
         }
         
-        /* Mood Selector */
-        .mood-btn {
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 1.5rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid var(--darker);
+        }
+        
+        .timeline-line {
+            position: absolute;
+            left: 0.45rem;
+            top: 2.5rem;
+            bottom: -1rem;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), transparent);
+        }
+        
+        /* Character Card */
+        .character-card {
+            transition: all 0.3s;
+        }
+        .character-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 500;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #3b82f6; }
+        
+        /* Auth Modal */
+        .auth-input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            color: white;
+            outline: none;
             transition: all 0.2s;
         }
-        .mood-btn.active {
-            transform: scale(1.2);
-            filter: drop-shadow(0 0 10px currentColor);
+        
+        .auth-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
         }
         
-        /* Drag and Drop */
-        .draggable {
-            cursor: move;
-        }
-        .dragging {
-            opacity: 0.5;
-        }
-        .drop-zone {
-            border: 2px dashed var(--primary);
-            background: rgba(139, 92, 246, 0.1);
+        /* Share Link Display */
+        .share-link {
+            font-family: monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            word-break: break-all;
         }
     </style>
 </head>
 <body class="min-h-screen relative">
 
+    <!-- Auth Overlay -->
+    <div id="authOverlay" class="fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl w-full max-w-md p-8 border border-white/10 shadow-2xl">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-display font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
+                    <i class="fas fa-feather-alt mr-2"></i>StoryWeave
+                </h1>
+                <p class="text-gray-400">Create and share visual stories</p>
+            </div>
+            
+            <div id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Username</label>
+                    <input type="text" id="loginUser" class="auth-input" placeholder="Enter username">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Password</label>
+                    <input type="password" id="loginPass" class="auth-input" placeholder="Enter password">
+                </div>
+                <button onclick="login()" class="w-full py-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold transition shadow-lg shadow-purple-600/20">
+                    Login / Create Account
+                </button>
+                <p class="text-xs text-center text-gray-500 mt-4">
+                    No account? Enter new credentials to create one instantly.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Animated Background -->
     <div class="bg-particles" id="particles"></div>
 
-    <!-- Main App Container -->
-    <div class="relative z-10 flex h-screen overflow-hidden">
+    <!-- Main App -->
+    <div class="relative z-10 flex h-screen overflow-hidden" id="app" style="display: none;">
         
         <!-- Sidebar -->
-        <aside class="w-64 glass border-r border-white/10 flex flex-col">
+        <aside class="w-72 glass border-r border-white/10 flex flex-col">
             <div class="p-6 border-b border-white/10">
-                <h1 class="text-2xl font-display font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    <i class="fas fa-feather-alt mr-2"></i>StoryWeave
-                </h1>
+                <div class="flex items-center justify-between mb-4">
+                    <h1 class="text-xl font-display font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        <i class="fas fa-feather-alt mr-2"></i>StoryWeave
+                    </h1>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-gray-400">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs" id="userAvatar">
+                        ME
+                    </div>
+                    <span id="usernameDisplay">User</span>
+                </div>
             </div>
 
-            <nav class="flex-1 p-4 space-y-2">
-                <button onclick="switchView('canvas')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition flex items-center gap-3 text-purple-300 bg-white/5">
-                    <i class="fas fa-project-diagram"></i> Story Canvas
+            <nav class="flex-1 p-4 space-y-1">
+                <button onclick="switchView('canvas')" id="nav-canvas" class="nav-btn w-full text-left px-4 py-3 rounded-lg bg-white/10 text-purple-300 flex items-center gap-3 transition">
+                    <i class="fas fa-project-diagram w-5"></i> Story Canvas
                 </button>
-                <button onclick="switchView('timeline')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition flex items-center gap-3 text-gray-400">
-                    <i class="fas fa-stream"></i> Timeline View
+                <button onclick="switchView('timeline')" id="nav-timeline" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-gray-400 flex items-center gap-3 transition">
+                    <i class="fas fa-stream w-5"></i> Timeline View
                 </button>
-                <button onclick="switchView('characters')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition flex items-center gap-3 text-gray-400">
-                    <i class="fas fa-users"></i> Characters
+                <button onclick="switchView('characters')" id="nav-characters" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-gray-400 flex items-center gap-3 transition">
+                    <i class="fas fa-users w-5"></i> Characters
                 </button>
-                <button onclick="switchView('archive')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition flex items-center gap-3 text-gray-400">
-                    <i class="fas fa-archive"></i> Archive
+                <button onclick="switchView('stories')" id="nav-stories" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-gray-400 flex items-center gap-3 transition">
+                    <i class="fas fa-book w-5"></i> My Stories
                 </button>
             </nav>
 
-            <!-- Music Player Widget -->
-            <div class="p-4 border-t border-white/10">
-                <div class="glass-panel rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-purple-300 uppercase tracking-wider">Ambience</span>
-                        <div class="flex gap-1 h-4 items-end" id="visualizer">
-                            <div class="music-bar" style="height: 40%"></div>
-                            <div class="music-bar" style="height: 70%"></div>
-                            <div class="music-bar" style="height: 50%"></div>
-                            <div class="music-bar" style="height: 80%"></div>
-                            <div class="music-bar" style="height: 60%"></div>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <button onclick="toggleMusic('focus')" class="mood-track w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 text-sm transition flex items-center gap-2">
-                            <i class="fas fa-moon text-blue-400"></i> Deep Focus
-                        </button>
-                        <button onclick="toggleMusic('tension')" class="mood-track w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 text-sm transition flex items-center gap-2">
-                            <i class="fas fa-bolt text-yellow-400"></i> Building Tension
-                        </button>
-                        <button onclick="toggleMusic('emotional')" class="mood-track w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 text-sm transition flex items-center gap-2">
-                            <i class="fas fa-heart text-pink-400"></i> Emotional Core
-                        </button>
-                    </div>
-                    <div class="mt-3 flex items-center gap-2">
-                        <button onclick="togglePlay()" id="playBtn" class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center hover:bg-purple-500 transition">
-                            <i class="fas fa-play text-xs"></i>
-                        </button>
-                        <input type="range" min="0" max="100" value="50" class="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer">
-                    </div>
-                </div>
+            <div class="p-4 border-t border-white/10 space-y-2">
+                <button onclick="openShareModal()" class="w-full py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm flex items-center justify-center gap-2 transition">
+                    <i class="fas fa-share-alt"></i> Share Story
+                </button>
+                <button onclick="logout()" class="w-full py-2 rounded-lg text-red-400 hover:bg-red-500/10 text-sm transition">
+                    Logout
+                </button>
             </div>
         </aside>
 
@@ -225,129 +306,250 @@
             <!-- Top Bar -->
             <header class="glass border-b border-white/10 px-6 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <h2 id="pageTitle" class="text-xl font-display text-white">Untitled Story</h2>
-                    <button onclick="editTitle()" class="text-gray-400 hover:text-white transition">
-                        <i class="fas fa-pen text-xs"></i>
-                    </button>
-                    <span class="px-2 py-1 rounded bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">Draft</span>
+                    <h2 id="storyTitle" class="text-xl font-display text-white cursor-pointer hover:text-purple-300 transition" onclick="editTitle()" title="Click to edit">
+                        Untitled Story
+                    </h2>
+                    <span id="saveStatus" class="text-xs text-gray-500 flex items-center gap-1">
+                        <i class="fas fa-check"></i> Saved
+                    </span>
                 </div>
                 
                 <div class="flex items-center gap-3">
-                    <button onclick="openShareModal()" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-2 text-sm">
-                        <i class="fas fa-share-alt"></i> Share
+                    <button onclick="newStory()" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition">
+                        <i class="fas fa-plus mr-2"></i>New
                     </button>
-                    <button onclick="saveStory()" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition flex items-center gap-2 text-sm font-semibold shadow-lg shadow-purple-600/20">
+                    <button onclick="saveCurrentStory()" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition shadow-lg shadow-purple-600/20 flex items-center gap-2">
                         <i class="fas fa-save"></i> Save
                     </button>
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold">
-                        ME
-                    </div>
                 </div>
             </header>
 
-            <!-- Canvas Area -->
-            <div class="flex-1 overflow-auto p-8 relative" id="mainCanvas">
-                
-                <!-- Canvas View -->
-                <div id="canvasView" class="min-h-full">
-                    <div class="mb-6 flex items-center justify-between">
-                        <div class="flex gap-2">
-                            <button onclick="setTool('select')" class="tool-btn active px-4 py-2 rounded-lg bg-purple-600 text-white text-sm flex items-center gap-2">
-                                <i class="fas fa-mouse-pointer"></i> Select
-                            </button>
-                            <button onclick="setTool('card')" class="tool-btn px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-sm flex items-center gap-2">
-                                <i class="fas fa-plus"></i> Add Card
-                            </button>
-                            <button onclick="setTool('connect')" class="tool-btn px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-sm flex items-center gap-2">
-                                <i class="fas fa-link"></i> Connect
-                            </button>
-                        </div>
-                        <div class="flex gap-2">
-                            <select onchange="changeMood(this.value)" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-purple-500">
-                                <option value="all">All Moods</option>
-                                <option value="happy">Joyful</option>
-                                <option value="sad">Melancholy</option>
-                                <option value="tense">Tense</option>
-                                <option value="mysterious">Mysterious</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Infinite Canvas -->
-                    <div class="relative w-full h-[800px] glass-panel rounded-2xl overflow-hidden" id="canvasContainer">
-                        <svg class="absolute inset-0 w-full h-full pointer-events-none" id="connectionsLayer"></svg>
-                        <div class="absolute inset-0 p-8" id="cardsContainer">
-                            <!-- Cards will be dynamically added here -->
-                        </div>
-                        
-                        <!-- Empty State -->
-                        <div id="emptyState" class="absolute inset-0 flex items-center justify-center">
-                            <div class="text-center text-gray-500">
-                                <i class="fas fa-lightbulb text-4xl mb-4 opacity-50"></i>
-                                <p class="font-hand text-2xl">Click "Add Card" to begin your story...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Timeline View (Hidden by default) -->
-                <div id="timelineView" class="hidden max-w-4xl mx-auto">
-                    <div class="relative">
-                        <div class="absolute left-8 top-0 bottom-0 w-1 timeline-line rounded-full"></div>
-                        <div id="timelineContainer" class="space-y-8 pl-20 py-8">
-                            <!-- Timeline items will be added here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Characters View (Hidden by default) -->
-                <div id="charactersView" class="hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="charactersGrid">
-                        <button onclick="openCharacterModal()" class="glass-panel rounded-xl p-8 border-dashed border-2 border-purple-500/30 hover:border-purple-500/60 transition flex flex-col items-center justify-center gap-4 text-gray-400 hover:text-purple-300 min-h-[300px]">
-                            <i class="fas fa-plus text-3xl"></i>
-                            <span class="font-hand text-xl">Create Character</span>
+            <!-- Canvas View -->
+            <div id="view-canvas" class="flex-1 overflow-hidden relative bg-slate-950">
+                <!-- Canvas Controls -->
+                <div class="absolute top-4 right-4 z-20 flex flex-col gap-2">
+                    <div class="glass-panel rounded-lg p-2 flex flex-col gap-2">
+                        <button onclick="zoomIn()" class="w-10 h-10 rounded hover:bg-white/10 flex items-center justify-center text-gray-300 hover:text-white transition" title="Zoom In">
+                            <i class="fas fa-plus"></i>
                         </button>
+                        <button onclick="resetZoom()" class="w-10 h-10 rounded hover:bg-white/10 flex items-center justify-center text-gray-300 hover:text-white transition" title="Reset Zoom">
+                            <i class="fas fa-compress"></i>
+                        </button>
+                        <button onclick="zoomOut()" class="w-10 h-10 rounded hover:bg-white/10 flex items-center justify-center text-gray-300 hover:text-white transition" title="Zoom Out">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                    <div class="glass-panel rounded-lg p-2">
+                        <button onclick="openCardModal()" class="w-10 h-10 rounded bg-purple-600 hover:bg-purple-500 flex items-center justify-center text-white transition shadow-lg" title="Add Card">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-4 left-4 z-20 text-xs text-gray-500">
+                    Scroll to zoom • Drag to pan • Click card to edit
+                </div>
+
+                <!-- Infinite Canvas -->
+                <div id="canvasViewport" class="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing" onmousedown="startPan(event)">
+                    <div id="canvasWrapper" class="relative w-[3000px] h-[3000px] canvas-container">
+                        <svg id="connectionsLayer" class="absolute inset-0 w-full h-full pointer-events-none"></svg>
+                        <div id="cardsContainer" class="absolute inset-0">
+                            <!-- Cards injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline View -->
+            <div id="view-timeline" class="hidden flex-1 overflow-auto p-8 bg-slate-950">
+                <div class="max-w-3xl mx-auto">
+                    <h2 class="text-2xl font-display text-white mb-8">Story Timeline</h2>
+                    <div id="timelineContainer" class="space-y-6">
+                        <!-- Timeline items injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Characters View -->
+            <div id="view-characters" class="hidden flex-1 overflow-auto p-8 bg-slate-950">
+                <div class="max-w-6xl mx-auto">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-2xl font-display text-white">Characters</h2>
+                        <button onclick="openCharacterModal()" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white transition flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Add Character
+                        </button>
+                    </div>
+                    <div id="charactersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Characters injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stories List View -->
+            <div id="view-stories" class="hidden flex-1 overflow-auto p-8 bg-slate-950">
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-display text-white mb-8">My Stories</h2>
+                    <div id="storiesList" class="space-y-4">
+                        <!-- Stories injected here -->
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Add Card Modal -->
+    <!-- Card Modal -->
     <div id="cardModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl w-full max-w-lg modal-enter border border-white/20 shadow-2xl shadow-purple-900/20">
+        <div class="glass-panel rounded-2xl w-full max-w-lg modal-enter border border-white/20">
             <div class="p-6 border-b border-white/10 flex justify-between items-center">
-                <h3 class="text-xl font-display text-white">Story Beat</h3>
+                <h3 class="text-xl font-display text-white" id="cardModalTitle">Add Story Beat</h3>
                 <button onclick="closeModal('cardModal')" class="text-gray-400 hover:text-white">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="p-6 space-y-4">
+                <input type="hidden" id="editingCardId">
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Title</label>
-                    <input type="text" id="cardTitle" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition" placeholder="e.g., The Inciting Incident">
+                    <label class="block text-sm text-gray-400 mb-1">Title</label>
+                    <input type="text" id="cardTitle" class="auth-input" placeholder="e.g., The Discovery">
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Content</label>
-                    <textarea id="cardContent" rows="4" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition resize-none" placeholder="What happens in this scene?"></textarea>
+                    <label class="block text-sm text-gray-400 mb-1">Description</label>
+                    <textarea id="cardContent" rows="3" class="auth-input resize-none" placeholder="What happens in this scene?"></textarea>
                 </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-2">Mood</label>
-                    <div class="flex gap-3">
-                        <button onclick="selectMood('happy')" class="mood-btn w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 flex items-center justify-center" data-mood="happy">😊</button>
-                        <button onclick="selectMood('sad')" class="mood-btn w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/50 text-blue-400 flex items-center justify-center" data-mood="sad">😢</button>
-                        <button onclick="selectMood('tense')" class="mood-btn w-10 h-10 rounded-full bg-red-500/20 border border-red-500/50 text-red-400 flex items-center justify-center" data-mood="tense">😰</button>
-                        <button onclick="selectMood('mysterious')" class="mood-btn w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/50 text-purple-400 flex items-center justify-center" data-mood="mysterious">🌙</button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Mood</label>
+                        <select id="cardMood" class="auth-input">
+                            <option value="neutral">Neutral</option>
+                            <option value="happy">Joyful</option>
+                            <option value="sad">Melancholy</option>
+                            <option value="tense">Tense</option>
+                            <option value="mysterious">Mysterious</option>
+                            <option value="action">Action</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Act</label>
+                        <select id="cardAct" class="auth-input">
+                            <option value="1">Act 1: Setup</option>
+                            <option value="2">Act 2: Confrontation</option>
+                            <option value="3">Act 3: Resolution</option>
+                        </select>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Tags</label>
-                    <input type="text" id="cardTags" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 transition text-sm" placeholder="Add tags separated by commas">
+                    <label class="block text-sm text-gray-400 mb-1">Characters in Scene</label>
+                    <select id="cardCharacters" multiple class="auth-input h-24">
+                        <!-- Populated dynamically -->
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Notes</label>
+                    <textarea id="cardNotes" rows="2" class="auth-input resize-none" placeholder="Internal notes..."></textarea>
                 </div>
             </div>
-            <div class="p-6 border-t border-white/10 flex justify-end gap-3">
-                <button onclick="closeModal('cardModal')" class="px-4 py-2 rounded-lg text-gray-400 hover:text-white transition">Cancel</button>
-                <button onclick="saveCard()" class="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold transition shadow-lg shadow-purple-600/20">Add to Canvas</button>
+            <div class="p-6 border-t border-white/10 flex justify-between">
+                <button type="button" onclick="deleteCurrentCard()" id="deleteCardBtn" class="px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition hidden">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+                <div class="flex gap-3 ml-auto">
+                    <button onclick="closeModal('cardModal')" class="px-4 py-2 rounded-lg text-gray-400 hover:text-white transition">Cancel</button>
+                    <button onclick="saveCard()" class="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold transition">
+                        Save Card
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Character Modal -->
+    <div id="characterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl w-full max-w-2xl modal-enter border border-white/20 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 class="text-xl font-display text-white" id="charModalTitle">Add Character</h3>
+                <button onclick="closeModal('characterModal')" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <input type="hidden" id="editingCharId">
+                
+                <div class="flex gap-6">
+                    <div class="w-32 flex-shrink-0">
+                        <div class="aspect-square rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-dashed border-white/20 flex items-center justify-center overflow-hidden relative group cursor-pointer" onclick="document.getElementById('charImageInput').click()">
+                            <img id="charImagePreview" class="absolute inset-0 w-full h-full object-cover hidden">
+                            <div id="charImagePlaceholder" class="text-center p-2">
+                                <i class="fas fa-camera text-2xl text-gray-500 mb-1"></i>
+                                <p class="text-xs text-gray-500">Click to upload</p>
+                            </div>
+                            <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                <i class="fas fa-upload text-white"></i>
+                            </div>
+                        </div>
+                        <input type="file" id="charImageInput" accept="image/*" class="hidden" onchange="handleCharImageUpload(event)">
+                    </div>
+                    
+                    <div class="flex-1 space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Name *</label>
+                            <input type="text" id="charName" class="auth-input" placeholder="Character name">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Role</label>
+                                <select id="charRole" class="auth-input">
+                                    <option value="Protagonist">Protagonist</option>
+                                    <option value="Antagonist">Antagonist</option>
+                                    <option value="Supporting">Supporting</option>
+                                    <option value="Mentor">Mentor</option>
+                                    <option value="Love Interest">Love Interest</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Age</label>
+                                <input type="text" id="charAge" class="auth-input" placeholder="e.g., 25">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Occupation</label>
+                            <input type="text" id="charOccupation" class="auth-input" placeholder="e.g., Detective">
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Biography</label>
+                    <textarea id="charBio" rows="3" class="auth-input resize-none" placeholder="Character background..."></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Goals & Motivations</label>
+                    <textarea id="charGoals" rows="2" class="auth-input resize-none" placeholder="What drives this character?"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Strengths</label>
+                        <input type="text" id="charStrengths" class="auth-input" placeholder="Comma separated">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Weaknesses</label>
+                        <input type="text" id="charWeaknesses" class="auth-input" placeholder="Comma separated">
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-white/10 flex justify-between">
+                <button type="button" onclick="deleteCurrentCharacter()" id="deleteCharBtn" class="px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition hidden">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+                <div class="flex gap-3 ml-auto">
+                    <button onclick="closeModal('characterModal')" class="px-4 py-2 rounded-lg text-gray-400 hover:text-white transition">Cancel</button>
+                    <button onclick="saveCharacter()" class="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold transition">
+                        Save Character
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -362,493 +564,908 @@
                 </button>
             </div>
             <div class="p-6 space-y-4">
-                <div class="flex gap-2">
-                    <input type="text" value="https://storyweave.app/s/story-123" readonly class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-gray-400 text-sm">
-                    <button class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-white">
-                        <i class="fas fa-copy"></i>
-                    </button>
+                <div class="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+                    <p class="text-sm text-purple-300 mb-2">Share this link with friends:</p>
+                    <div class="share-link text-purple-200" id="shareLink">https://storyweave.app/s/demo-story-123</div>
                 </div>
+                
                 <div class="space-y-2">
-                    <label class="text-sm text-gray-400">Permissions</label>
-                    <select class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm">
-                        <option>Can view</option>
-                        <option>Can comment</option>
-                        <option>Can edit</option>
+                    <label class="text-sm text-gray-400">Permission Level</label>
+                    <select id="sharePermission" class="auth-input" onchange="updateShareLink()">
+                        <option value="view">View only</option>
+                        <option value="comment">Can comment</option>
+                        <option value="edit">Can edit</option>
                     </select>
                 </div>
-                <div class="pt-4 flex gap-3">
-                    <button class="flex-1 py-3 rounded-lg bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 text-[#1DA1F2] hover:bg-[#1DA1F2]/30 transition flex items-center justify-center gap-2">
-                        <i class="fab fa-twitter"></i> Tweet
+                
+                <div class="flex gap-2 pt-2">
+                    <button onclick="copyShareLink()" class="flex-1 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-copy"></i> Copy Link
                     </button>
-                    <button class="flex-1 py-3 rounded-lg bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#5865F2] hover:bg-[#5865F2]/30 transition flex items-center justify-center gap-2">
-                        <i class="fab fa-discord"></i> Discord
+                    <button onclick="emailShare()" class="flex-1 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-envelope"></i> Email
                     </button>
+                </div>
+                
+                <div class="border-t border-white/10 pt-4 mt-4">
+                    <p class="text-xs text-gray-500 mb-2">Shared with:</p>
+                    <div id="sharedWithList" class="space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-300">sarah.writer@email.com</span>
+                            <span class="text-xs text-purple-400">Can edit</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Character Modal -->
-    <div id="characterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl w-full max-w-2xl modal-enter border border-white/20 max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-white/10 flex justify-between items-center">
-                <h3 class="text-xl font-display text-white">Character Profile</h3>
-                <button onclick="closeModal('characterModal')" class="text-gray-400 hover:text-white">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="space-y-4">
-                    <div class="aspect-square rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10 flex items-center justify-center text-4xl">
-                        <i class="fas fa-user text-gray-400"></i>
-                    </div>
-                    <button class="w-full py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-gray-300 transition">
-                        Upload Portrait
-                    </button>
-                </div>
-                <div class="md:col-span-2 space-y-4">
-                    <input type="text" placeholder="Character Name" class="w-full bg-transparent border-b border-white/20 py-2 text-2xl font-display text-white focus:outline-none focus:border-purple-500 transition">
-                    <input type="text" placeholder="Role (Protagonist, Antagonist, etc.)" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 transition">
-                    <textarea placeholder="Backstory and motivations..." rows="4" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition resize-none"></textarea>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" placeholder="Age" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 transition">
-                        <input type="text" placeholder="Occupation" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 transition">
-                    </div>
-                </div>
-            </div>
-            <div class="p-6 border-t border-white/10 flex justify-end gap-3">
-                <button onclick="closeModal('characterModal')" class="px-4 py-2 rounded-lg text-gray-400 hover:text-white transition">Cancel</button>
-                <button onclick="saveCharacter()" class="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold transition shadow-lg shadow-purple-600/20">Save Character</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 right-6 bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
-        <i class="fas fa-check-circle"></i>
-        <span id="toastMessage">Saved successfully!</span>
-    </div>
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
 
     <script>
-        // State Management
-        let currentTool = 'select';
-        let cards = [];
-        let characters = [];
-        let currentMood = null;
-        let isPlaying = false;
-        let currentView = 'canvas';
-        let draggedCard = null;
-        let selectedCard = null;
+        // Application State
+        const AppState = {
+            currentUser: null,
+            currentStory: null,
+            stories: [],
+            characters: [],
+            cards: [],
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            isPanning: false,
+            lastMouseX: 0,
+            lastMouseY: 0,
+            editingCardId: null,
+            editingCharId: null,
+            sharedWith: []
+        };
+
+        // Mood Configurations
+        const MoodConfig = {
+            happy: { color: 'border-yellow-500/50 bg-yellow-500/10', icon: '☀️', label: 'Joyful' },
+            sad: { color: 'border-blue-500/50 bg-blue-500/10', icon: '🌧️', label: 'Melancholy' },
+            tense: { color: 'border-red-500/50 bg-red-500/10', icon: '⚡', label: 'Tense' },
+            mysterious: { color: 'border-purple-500/50 bg-purple-500/10', icon: '🌙', label: 'Mysterious' },
+            action: { color: 'border-orange-500/50 bg-orange-500/10', icon: '⚔️', label: 'Action' },
+            neutral: { color: 'border-gray-500/50 bg-gray-500/10', icon: '○', label: 'Neutral' }
+        };
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             createParticles();
-            loadDemoData();
-            setupDragAndDrop();
+            loadFromLocalStorage();
+            
+            // Check if user is logged in
+            const savedUser = localStorage.getItem('storyweave_user');
+            if (savedUser) {
+                AppState.currentUser = JSON.parse(savedUser);
+                showApp();
+            }
+            
+            // Setup canvas interactions
+            setupCanvas();
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboard);
         });
 
-        // Create Background Particles
-        function createParticles() {
-            const container = document.getElementById('particles');
-            for (let i = 0; i < 50; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 20 + 's';
-                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
-                container.appendChild(particle);
+        // Auth Functions
+        function login() {
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value.trim();
+            
+            if (!username || !password) {
+                showToast('Please enter username and password', 'error');
+                return;
+            }
+            
+            // Simple auth simulation
+            const users = JSON.parse(localStorage.getItem('storyweave_users') || '[]');
+            let user = users.find(u => u.username === username);
+            
+            if (!user) {
+                // Create new user
+                user = {
+                    id: Date.now().toString(),
+                    username,
+                    password, // In real app, hash this!
+                    createdAt: new Date().toISOString()
+                };
+                users.push(user);
+                localStorage.setItem('storyweave_users', JSON.stringify(users));
+                showToast('Account created successfully!', 'success');
+            } else if (user.password !== password) {
+                showToast('Incorrect password', 'error');
+                return;
+            }
+            
+            AppState.currentUser = user;
+            localStorage.setItem('storyweave_user', JSON.stringify(user));
+            showApp();
+        }
+
+        function logout() {
+            AppState.currentUser = null;
+            localStorage.removeItem('storyweave_user');
+            location.reload();
+        }
+
+        function showApp() {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('app').style.display = 'flex';
+            document.getElementById('usernameDisplay').textContent = AppState.currentUser.username;
+            document.getElementById('userAvatar').textContent = AppState.currentUser.username.substring(0, 2).toUpperCase();
+            
+            // Load or create default story
+            loadStories();
+            if (AppState.stories.length === 0) {
+                createNewStory();
+            } else {
+                loadStory(AppState.stories[0].id);
             }
         }
 
-        // Demo Data
-        function loadDemoData() {
-            // Add sample cards
-            addCardToCanvas({
-                id: 1,
-                title: "The Ordinary World",
-                content: "Our hero lives a mundane life, unaware of the adventure that awaits...",
-                x: 100,
-                y: 100,
-                mood: 'happy',
-                tags: ['setup', 'introduction']
-            });
+        // Story Management
+        function createNewStory() {
+            const story = {
+                id: Date.now().toString(),
+                title: 'Untitled Story',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                userId: AppState.currentUser.id,
+                cards: [],
+                characters: []
+            };
             
-            addCardToCanvas({
-                id: 2,
-                title: "Call to Adventure",
-                content: "A mysterious letter arrives, changing everything.",
-                x: 400,
-                y: 100,
-                mood: 'mysterious',
-                tags: ['inciting incident']
-            });
+            AppState.stories.push(story);
+            AppState.currentStory = story;
+            AppState.cards = [];
+            AppState.characters = [];
             
-            addCardToCanvas({
-                id: 3,
-                title: "Refusal of the Call",
-                content: "Fear and doubt cloud the hero's mind.",
-                x: 700,
-                y: 250,
-                mood: 'sad',
-                tags: ['conflict']
-            });
+            saveToLocalStorage();
+            renderAll();
+            showToast('New story created');
+        }
 
+        function newStory() {
+            if (confirm('Create a new story? Current story will be saved.')) {
+                saveCurrentStory();
+                createNewStory();
+            }
+        }
+
+        function saveCurrentStory() {
+            if (!AppState.currentStory) return;
+            
+            AppState.currentStory.title = document.getElementById('storyTitle').textContent;
+            AppState.currentStory.cards = AppState.cards;
+            AppState.currentStory.characters = AppState.characters;
+            AppState.currentStory.updatedAt = new Date().toISOString();
+            
+            saveToLocalStorage();
+            updateSaveStatus('Saved');
+            showToast('Story saved');
+        }
+
+        function loadStories() {
+            const allStories = JSON.parse(localStorage.getItem('storyweave_stories') || '[]');
+            AppState.stories = allStories.filter(s => s.userId === AppState.currentUser.id);
+        }
+
+        function loadStory(storyId) {
+            const story = AppState.stories.find(s => s.id === storyId);
+            if (!story) return;
+            
+            AppState.currentStory = story;
+            AppState.cards = story.cards || [];
+            AppState.characters = story.characters || [];
+            
+            document.getElementById('storyTitle').textContent = story.title;
+            renderAll();
+        }
+
+        function renderAll() {
+            renderCards();
+            renderTimeline();
+            renderCharacters();
+            renderStoriesList();
             updateConnections();
         }
 
-        // View Switching
-        function switchView(view) {
-            currentView = view;
+        // Canvas Functions
+        function setupCanvas() {
+            const viewport = document.getElementById('canvasViewport');
             
-            // Hide all views
-            document.getElementById('canvasView').classList.add('hidden');
-            document.getElementById('timelineView').classList.add('hidden');
-            document.getElementById('charactersView').classList.add('hidden');
+            // Zoom with wheel
+            viewport.addEventListener('wheel', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                    AppState.zoom = Math.max(0.3, Math.min(3, AppState.zoom * delta));
+                    updateCanvasTransform();
+                }
+            }, { passive: false });
             
-            // Show selected view
-            document.getElementById(view + 'View').classList.remove('hidden');
-            
-            // Update nav buttons
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-purple-300', 'bg-white/5');
-                btn.classList.add('text-gray-400');
+            // Pan functionality
+            viewport.addEventListener('mousemove', (e) => {
+                if (AppState.isPanning) {
+                    const dx = e.clientX - AppState.lastMouseX;
+                    const dy = e.clientY - AppState.lastMouseY;
+                    AppState.panX += dx;
+                    AppState.panY += dy;
+                    AppState.lastMouseX = e.clientX;
+                    AppState.lastMouseY = e.clientY;
+                    updateCanvasTransform();
+                }
             });
-            event.target.classList.remove('text-gray-400');
-            event.target.classList.add('text-purple-300', 'bg-white/5');
+            
+            viewport.addEventListener('mouseup', () => {
+                AppState.isPanning = false;
+                viewport.style.cursor = 'grab';
+            });
+            
+            viewport.addEventListener('mouseleave', () => {
+                AppState.isPanning = false;
+            });
+        }
+
+        function startPan(e) {
+            if (e.target.id === 'canvasViewport' || e.target.id === 'canvasWrapper') {
+                AppState.isPanning = true;
+                AppState.lastMouseX = e.clientX;
+                AppState.lastMouseY = e.clientY;
+                e.target.style.cursor = 'grabbing';
+            }
+        }
+
+        function updateCanvasTransform() {
+            const wrapper = document.getElementById('canvasWrapper');
+            wrapper.style.transform = `translate(${AppState.panX}px, ${AppState.panY}px) scale(${AppState.zoom})`;
+        }
+
+        function zoomIn() {
+            AppState.zoom = Math.min(3, AppState.zoom * 1.2);
+            updateCanvasTransform();
+        }
+
+        function zoomOut() {
+            AppState.zoom = Math.max(0.3, AppState.zoom / 1.2);
+            updateCanvasTransform();
+        }
+
+        function resetZoom() {
+            AppState.zoom = 1;
+            AppState.panX = 0;
+            AppState.panY = 0;
+            updateCanvasTransform();
+        }
+
+        // Card Functions
+        function openCardModal(cardId = null) {
+            const modal = document.getElementById('cardModal');
+            const titleEl = document.getElementById('cardModalTitle');
+            const deleteBtn = document.getElementById('deleteCardBtn');
+            
+            // Populate character select
+            const charSelect = document.getElementById('cardCharacters');
+            charSelect.innerHTML = AppState.characters.map(c => 
+                `<option value="${c.id}">${c.name}</option>`
+            ).join('');
+            
+            if (cardId) {
+                const card = AppState.cards.find(c => c.id === cardId);
+                if (!card) return;
+                
+                AppState.editingCardId = cardId;
+                titleEl.textContent = 'Edit Story Beat';
+                deleteBtn.classList.remove('hidden');
+                
+                document.getElementById('cardTitle').value = card.title;
+                document.getElementById('cardContent').value = card.content;
+                document.getElementById('cardMood').value = card.mood;
+                document.getElementById('cardAct').value = card.act || '1';
+                document.getElementById('cardNotes').value = card.notes || '';
+                
+                // Select characters
+                Array.from(charSelect.options).forEach(opt => {
+                    opt.selected = card.characters?.includes(opt.value);
+                });
+            } else {
+                AppState.editingCardId = null;
+                titleEl.textContent = 'Add Story Beat';
+                deleteBtn.classList.add('hidden');
+                
+                document.getElementById('cardTitle').value = '';
+                document.getElementById('cardContent').value = '';
+                document.getElementById('cardMood').value = 'neutral';
+                document.getElementById('cardAct').value = '1';
+                document.getElementById('cardNotes').value = '';
+                charSelect.selectedIndex = -1;
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function saveCard() {
+            const title = document.getElementById('cardTitle').value.trim();
+            const content = document.getElementById('cardContent').value.trim();
+            const mood = document.getElementById('cardMood').value;
+            const act = document.getElementById('cardAct').value;
+            const notes = document.getElementById('cardNotes').value.trim();
+            
+            const charSelect = document.getElementById('cardCharacters');
+            const selectedChars = Array.from(charSelect.selectedOptions).map(o => o.value);
+            
+            if (!title) {
+                showToast('Title is required', 'error');
+                return;
+            }
+            
+            if (AppState.editingCardId) {
+                // Update existing
+                const card = AppState.cards.find(c => c.id === AppState.editingCardId);
+                card.title = title;
+                card.content = content;
+                card.mood = mood;
+                card.act = act;
+                card.notes = notes;
+                card.characters = selectedChars;
+                card.updatedAt = new Date().toISOString();
+            } else {
+                // Create new
+                const newCard = {
+                    id: Date.now().toString(),
+                    title,
+                    content,
+                    mood,
+                    act,
+                    notes,
+                    characters: selectedChars,
+                    x: 1500 + (Math.random() - 0.5) * 200,
+                    y: 1500 + (Math.random() - 0.5) * 200,
+                    createdAt: new Date().toISOString()
+                };
+                AppState.cards.push(newCard);
+            }
+            
+            closeModal('cardModal');
+            renderAll();
+            markUnsaved();
+            showToast(AppState.editingCardId ? 'Card updated' : 'Card created');
+        }
+
+        function deleteCurrentCard() {
+            if (!AppState.editingCardId) return;
+            if (!confirm('Delete this card?')) return;
+            
+            AppState.cards = AppState.cards.filter(c => c.id !== AppState.editingCardId);
+            closeModal('cardModal');
+            renderAll();
+            markUnsaved();
+            showToast('Card deleted');
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+            
+            AppState.cards.forEach(card => {
+                const mood = MoodConfig[card.mood] || MoodConfig.neutral;
+                const el = document.createElement('div');
+                el.className = `story-card glass-panel rounded-xl border-2 p-4 ${mood.color}`;
+                el.style.left = card.x + 'px';
+                el.style.top = card.y + 'px';
+                el.dataset.id = card.id;
+                
+                // Card content
+                el.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-white text-sm truncate flex-1 mr-2">${card.title}</h4>
+                        <span class="text-lg" title="${mood.label}">${mood.icon}</span>
+                    </div>
+                    <p class="text-gray-300 text-xs mb-3 line-clamp-3 leading-relaxed">${card.content}</p>
+                    <div class="flex items-center justify-between text-[10px] text-gray-400">
+                        <span>Act ${card.act}</span>
+                        ${card.characters?.length ? `<span><i class="fas fa-user"></i> ${card.characters.length}</span>` : ''}
+                    </div>
+                `;
+                
+                // Click to edit
+                el.addEventListener('click', (e) => {
+                    if (!AppState.isPanning) {
+                        openCardModal(card.id);
+                    }
+                });
+                
+                // Drag functionality
+                makeDraggable(el, card);
+                
+                container.appendChild(el);
+            });
+            
+            updateConnections();
+        }
+
+        function makeDraggable(el, cardData) {
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+            
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.closest('button')) return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialX = cardData.x;
+                initialY = cardData.y;
+                el.style.zIndex = 1000;
+                e.stopPropagation();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const dx = (e.clientX - startX) / AppState.zoom;
+                const dy = (e.clientY - startY) / AppState.zoom;
+                
+                cardData.x = initialX + dx;
+                cardData.y = initialY + dy;
+                
+                el.style.left = cardData.x + 'px';
+                el.style.top = cardData.y + 'px';
+                
+                updateConnections();
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    el.style.zIndex = '';
+                    markUnsaved();
+                }
+            });
+        }
+
+        function updateConnections() {
+            const svg = document.getElementById('connectionsLayer');
+            svg.innerHTML = '';
+            
+            // Sort cards by creation date for connections
+            const sortedCards = [...AppState.cards].sort((a, b) => 
+                new Date(a.createdAt) - new Date(b.createdAt)
+            );
+            
+            for (let i = 0; i < sortedCards.length - 1; i++) {
+                const c1 = sortedCards[i];
+                const c2 = sortedCards[i + 1];
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', c1.x + 140);
+                line.setAttribute('y1', c1.y + 50);
+                line.setAttribute('x2', c2.x + 140);
+                line.setAttribute('y2', c2.y + 50);
+                line.setAttribute('class', 'connection-line');
+                
+                svg.appendChild(line);
+            }
+        }
+
+        // Timeline Functions
+        function renderTimeline() {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = '';
+            
+            if (AppState.cards.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center italic">No story beats yet. Add cards in the canvas view.</p>';
+                return;
+            }
+            
+            // Sort by act then creation
+            const sorted = [...AppState.cards].sort((a, b) => {
+                if (a.act !== b.act) return parseInt(a.act) - parseInt(b.act);
+                return new Date(a.createdAt) - new Date(b.createdAt);
+            });
+            
+            sorted.forEach((card, idx) => {
+                const mood = MoodConfig[card.mood] || MoodConfig.neutral;
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                
+                item.innerHTML = `
+                    <div class="timeline-dot" style="background: ${getMoodColor(card.mood)}"></div>
+                    ${idx < sorted.length - 1 ? '<div class="timeline-line"></div>' : ''}
+                    <div class="glass-panel rounded-xl p-6 border border-white/10 hover:border-purple-500/30 transition cursor-pointer" onclick="openCardModal('${card.id}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">${mood.icon}</span>
+                                <h3 class="font-display text-lg text-white">${card.title}</h3>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded bg-white/10 text-gray-300">Act ${card.act}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-3">${card.content}</p>
+                        ${card.characters?.length ? `
+                            <div class="flex gap-2 mt-2">
+                                ${card.characters.map(cid => {
+                                    const char = AppState.characters.find(c => c.id === cid);
+                                    return char ? `<span class="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-300">${char.name}</span>` : '';
+                                }).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        function getMoodColor(mood) {
+            const colors = {
+                happy: '#eab308',
+                sad: '#3b82f6',
+                tense: '#ef4444',
+                mysterious: '#a855f7',
+                action: '#f97316',
+                neutral: '#6b7280'
+            };
+            return colors[mood] || colors.neutral;
+        }
+
+        // Character Functions
+        function openCharacterModal(charId = null) {
+            const modal = document.getElementById('characterModal');
+            const titleEl = document.getElementById('charModalTitle');
+            const deleteBtn = document.getElementById('deleteCharBtn');
+            
+            // Reset image
+            document.getElementById('charImagePreview').classList.add('hidden');
+            document.getElementById('charImagePlaceholder').classList.remove('hidden');
+            document.getElementById('charImagePreview').src = '';
+            
+            if (charId) {
+                const character = AppState.characters.find(c => c.id === charId);
+                if (!character) return;
+                
+                AppState.editingCharId = charId;
+                titleEl.textContent = 'Edit Character';
+                deleteBtn.classList.remove('hidden');
+                
+                document.getElementById('charName').value = character.name;
+                document.getElementById('charRole').value = character.role;
+                document.getElementById('charAge').value = character.age || '';
+                document.getElementById('charOccupation').value = character.occupation || '';
+                document.getElementById('charBio').value = character.bio || '';
+                document.getElementById('charGoals').value = character.goals || '';
+                document.getElementById('charStrengths').value = character.strengths || '';
+                document.getElementById('charWeaknesses').value = character.weaknesses || '';
+                
+                if (character.image) {
+                    document.getElementById('charImagePreview').src = character.image;
+                    document.getElementById('charImagePreview').classList.remove('hidden');
+                    document.getElementById('charImagePlaceholder').classList.add('hidden');
+                }
+            } else {
+                AppState.editingCharId = null;
+                titleEl.textContent = 'Add Character';
+                deleteBtn.classList.add('hidden');
+                
+                document.getElementById('charName').value = '';
+                document.getElementById('charRole').value = 'Protagonist';
+                document.getElementById('charAge').value = '';
+                document.getElementById('charOccupation').value = '';
+                document.getElementById('charBio').value = '';
+                document.getElementById('charGoals').value = '';
+                document.getElementById('charStrengths').value = '';
+                document.getElementById('charWeaknesses').value = '';
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function handleCharImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('charImagePreview').src = e.target.result;
+                document.getElementById('charImagePreview').classList.remove('hidden');
+                document.getElementById('charImagePlaceholder').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveCharacter() {
+            const name = document.getElementById('charName').value.trim();
+            if (!name) {
+                showToast('Character name is required', 'error');
+                return;
+            }
+            
+            const imageSrc = document.getElementById('charImagePreview').src;
+            const characterData = {
+                id: AppState.editingCharId || Date.now().toString(),
+                name,
+                role: document.getElementById('charRole').value,
+                age: document.getElementById('charAge').value,
+                occupation: document.getElementById('charOccupation').value,
+                bio: document.getElementById('charBio').value,
+                goals: document.getElementById('charGoals').value,
+                strengths: document.getElementById('charStrengths').value,
+                weaknesses: document.getElementById('charWeaknesses').value,
+                image: imageSrc && !imageSrc.includes(window.location.href) ? imageSrc : null,
+                updatedAt: new Date().toISOString()
+            };
+            
+            if (AppState.editingCharId) {
+                const idx = AppState.characters.findIndex(c => c.id === AppState.editingCharId);
+                AppState.characters[idx] = characterData;
+            } else {
+                characterData.createdAt = new Date().toISOString();
+                AppState.characters.push(characterData);
+            }
+            
+            closeModal('characterModal');
+            renderCharacters();
+            markUnsaved();
+            showToast(AppState.editingCharId ? 'Character updated' : 'Character created');
+        }
+
+        function deleteCurrentCharacter() {
+            if (!AppState.editingCharId) return;
+            if (!confirm('Delete this character? They will be removed from all scenes.')) return;
+            
+            // Remove from cards
+            AppState.cards.forEach(card => {
+                if (card.characters) {
+                    card.characters = card.characters.filter(id => id !== AppState.editingCharId);
+                }
+            });
+            
+            AppState.characters = AppState.characters.filter(c => c.id !== AppState.editingCharId);
+            closeModal('characterModal');
+            renderAll();
+            markUnsaved();
+            showToast('Character deleted');
+        }
+
+        function renderCharacters() {
+            const grid = document.getElementById('charactersGrid');
+            
+            // Keep the add button, remove others
+            const addBtn = grid.firstElementChild;
+            grid.innerHTML = '';
+            grid.appendChild(addBtn);
+            
+            AppState.characters.forEach(char => {
+                const card = document.createElement('div');
+                card.className = 'character-card glass-panel rounded-xl p-6 border border-white/10 hover:border-purple-500/30 cursor-pointer';
+                card.onclick = () => openCharacterModal(char.id);
+                
+                const initials = char.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                
+                card.innerHTML = `
+                    <div class="flex items-start gap-4">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 overflow-hidden">
+                            ${char.image ? `<img src="${char.image}" class="w-full h-full object-cover">` : initials}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-display text-lg text-white truncate">${char.name}</h3>
+                            <p class="text-sm text-purple-400">${char.role}</p>
+                            ${char.occupation ? `<p class="text-xs text-gray-400 mt-1">${char.occupation}</p>` : ''}
+                        </div>
+                    </div>
+                    ${char.bio ? `<p class="mt-4 text-sm text-gray-400 line-clamp-2">${char.bio}</p>` : ''}
+                    <div class="mt-4 flex gap-2 text-xs">
+                        ${char.age ? `<span class="px-2 py-1 rounded bg-white/5 text-gray-300">${char.age} years</span>` : ''}
+                        <span class="px-2 py-1 rounded bg-white/5 text-gray-300">
+                            ${AppState.cards.filter(c => c.characters?.includes(char.id)).length} scenes
+                        </span>
+                    </div>
+                `;
+                
+                grid.insertBefore(card, addBtn);
+            });
+        }
+
+        // Stories List
+        function renderStoriesList() {
+            const list = document.getElementById('storiesList');
+            list.innerHTML = '';
+            
+            AppState.stories.forEach(story => {
+                const item = document.createElement('div');
+                item.className = `glass-panel rounded-xl p-4 border ${story.id === AppState.currentStory?.id ? 'border-purple-500 bg-purple-500/10' : 'border-white/10'} hover:border-purple-500/30 transition cursor-pointer flex justify-between items-center`;
+                item.onclick = () => {
+                    saveCurrentStory();
+                    loadStory(story.id);
+                };
+                
+                const cardCount = story.cards?.length || 0;
+                const charCount = story.characters?.length || 0;
+                const date = new Date(story.updatedAt).toLocaleDateString();
+                
+                item.innerHTML = `
+                    <div>
+                        <h3 class="font-display text-white text-lg">${story.title}</h3>
+                        <p class="text-sm text-gray-400">
+                            ${cardCount} beats • ${charCount} characters • Updated ${date}
+                        </p>
+                    </div>
+                    <div class="flex gap-2">
+                        ${story.id === AppState.currentStory?.id ? '<span class="text-xs px-2 py-1 rounded bg-purple-600 text-white">Active</span>' : ''}
+                        <button onclick="event.stopPropagation(); deleteStory('${story.id}')" class="text-gray-500 hover:text-red-400 p-2">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                list.appendChild(item);
+            });
+        }
+
+        function deleteStory(storyId) {
+            if (!confirm('Permanently delete this story?')) return;
+            
+            AppState.stories = AppState.stories.filter(s => s.id !== storyId);
+            
+            if (AppState.currentStory?.id === storyId) {
+                if (AppState.stories.length > 0) {
+                    loadStory(AppState.stories[0].id);
+                } else {
+                    createNewStory();
+                }
+            }
+            
+            saveToLocalStorage();
+            renderStoriesList();
+            showToast('Story deleted');
+        }
+
+        // Share Functions
+        function openShareModal() {
+            document.getElementById('shareModal').classList.remove('hidden');
+            updateShareLink();
+        }
+
+        function updateShareLink() {
+            const permission = document.getElementById('sharePermission').value;
+            const storyId = AppState.currentStory?.id || 'demo';
+            const link = `https://storyweave.app/s/${storyId}?p=${permission}`;
+            document.getElementById('shareLink').textContent = link;
+        }
+
+        function copyShareLink() {
+            const link = document.getElementById('shareLink').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Link copied to clipboard');
+            });
+        }
+
+        function emailShare() {
+            const link = document.getElementById('shareLink').textContent;
+            const subject = `Check out my story: ${AppState.currentStory?.title}`;
+            const body = `I'm writing a story on StoryWeave and wanted to share it with you: ${link}`;
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        // UI Helpers
+        function switchView(view) {
+            // Hide all views
+            ['canvas', 'timeline', 'characters', 'stories'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+                document.getElementById(`nav-${v}`).classList.remove('bg-white/10', 'text-purple-300');
+                document.getElementById(`nav-${v}`).classList.add('text-gray-400');
+            });
+            
+            // Show selected
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            document.getElementById(`nav-${view}`).classList.add('bg-white/10', 'text-purple-300');
+            document.getElementById(`nav-${view}`).classList.remove('text-gray-400');
             
             if (view === 'timeline') renderTimeline();
+            if (view === 'stories') renderStoriesList();
         }
 
-        // Tool Management
-        function setTool(tool) {
-            currentTool = tool;
-            document.querySelectorAll('.tool-btn').forEach(btn => {
-                btn.classList.remove('bg-purple-600', 'text-white');
-                btn.classList.add('bg-white/5', 'text-gray-300');
-            });
-            event.target.classList.remove('bg-white/5', 'text-gray-300');
-            event.target.classList.add('bg-purple-600', 'text-white');
-            
-            if (tool === 'card') openCardModal();
-        }
-
-        // Card Modal
-        function openCardModal() {
-            document.getElementById('cardModal').classList.remove('hidden');
-            document.getElementById('cardTitle').value = '';
-            document.getElementById('cardContent').value = '';
-            document.getElementById('cardTags').value = '';
-            currentMood = null;
-            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+        function editTitle() {
+            const current = document.getElementById('storyTitle').textContent;
+            const newTitle = prompt('Story title:', current);
+            if (newTitle && newTitle.trim()) {
+                document.getElementById('storyTitle').textContent = newTitle.trim();
+                markUnsaved();
+            }
         }
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
         }
 
-        function selectMood(mood) {
-            currentMood = mood;
-            document.querySelectorAll('.mood-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.mood === mood) btn.classList.add('active');
-            });
+        function markUnsaved() {
+            updateSaveStatus('Unsaved changes');
         }
 
-        function saveCard() {
-            const title = document.getElementById('cardTitle').value;
-            const content = document.getElementById('cardContent').value;
-            const tags = document.getElementById('cardTags').value.split(',').map(t => t.trim()).filter(t => t);
-            
-            if (!title) return showToast('Please enter a title', 'error');
-            
-            const card = {
-                id: Date.now(),
-                title,
-                content,
-                mood: currentMood || 'neutral',
-                tags,
-                x: 100 + Math.random() * 200,
-                y: 100 + Math.random() * 200
-            };
-            
-            cards.push(card);
-            addCardToCanvas(card);
-            closeModal('cardModal');
-            showToast('Card added to canvas');
-            
-            // Reset tool to select
-            setTool('select');
+        function updateSaveStatus(text) {
+            const el = document.getElementById('saveStatus');
+            el.innerHTML = text === 'Saved' ? 
+                '<i class="fas fa-check"></i> Saved' : 
+                '<i class="fas fa-circle text-xs"></i> ' + text;
+            el.className = text === 'Saved' ? 'text-xs text-gray-500 flex items-center gap-1' : 'text-xs text-yellow-500 flex items-center gap-1';
         }
 
-        function addCardToCanvas(cardData) {
-            document.getElementById('emptyState').style.display = 'none';
-            
-            const card = document.createElement('div');
-            card.className = 'story-card absolute w-64 glass-panel rounded-xl p-4 border border-white/10 cursor-move';
-            card.style.left = cardData.x + 'px';
-            card.style.top = cardData.y + 'px';
-            card.dataset.id = cardData.id;
-            card.draggable = true;
-            
-            const moodColors = {
-                happy: 'border-yellow-500/30 bg-yellow-500/5',
-                sad: 'border-blue-500/30 bg-blue-500/5',
-                tense: 'border-red-500/30 bg-red-500/5',
-                mysterious: 'border-purple-500/30 bg-purple-500/5',
-                neutral: 'border-white/10'
-            };
-            
-            card.classList.add(...(moodColors[cardData.mood] || moodColors.neutral).split(' '));
-            
-            card.innerHTML = `
-                <div class="flex justify-between items-start mb-2">
-                    <h4 class="font-bold text-white text-sm">${cardData.title}</h4>
-                    <button onclick="deleteCard(${cardData.id})" class="text-gray-500 hover:text-red-400 transition">
-                        <i class="fas fa-times text-xs"></i>
-                    </button>
-                </div>
-                <p class="text-gray-400 text-xs mb-3 line-clamp-3">${cardData.content}</p>
-                <div class="flex flex-wrap gap-1">
-                    ${cardData.tags.map(tag => `<span class="px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-gray-300">#${tag}</span>`).join('')}
-                </div>
-                <div class="mt-3 pt-2 border-t border-white/10 flex justify-between items-center">
-                    <span class="text-[10px] text-gray-500">${cardData.mood}</span>
-                    <button onclick="editCard(${cardData.id})" class="text-[10px] text-purple-400 hover:text-purple-300">Edit</button>
-                </div>
-            `;
-            
-            // Drag events
-            card.addEventListener('dragstart', (e) => {
-                draggedCard = card;
-                card.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            });
-            
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-                draggedCard = null;
-                updateConnections();
-            });
-            
-            document.getElementById('cardsContainer').appendChild(card);
-        }
-
-        // Drag and Drop Setup
-        function setupDragAndDrop() {
-            const container = document.getElementById('canvasContainer');
-            
-            container.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-            });
-            
-            container.addEventListener('drop', (e) => {
-                e.preventDefault();
-                if (draggedCard) {
-                    const rect = container.getBoundingClientRect();
-                    const x = e.clientX - rect.left - 128; // Center card
-                    const y = e.clientY - rect.top - 20;
-                    
-                    draggedCard.style.left = x + 'px';
-                    draggedCard.style.top = y + 'px';
-                    
-                    // Update data
-                    const id = parseInt(draggedCard.dataset.id);
-                    const cardData = cards.find(c => c.id === id);
-                    if (cardData) {
-                        cardData.x = x;
-                        cardData.y = y;
-                    }
+        // LocalStorage
+        function saveToLocalStorage() {
+            if (AppState.currentStory) {
+                // Update current story in stories array
+                const idx = AppState.stories.findIndex(s => s.id === AppState.currentStory.id);
+                if (idx !== -1) {
+                    AppState.stories[idx] = {
+                        ...AppState.currentStory,
+                        cards: AppState.cards,
+                        characters: AppState.characters,
+                        title: document.getElementById('storyTitle').textContent
+                    };
                 }
-            });
-        }
-
-        // Connections
-        function updateConnections() {
-            const svg = document.getElementById('connectionsLayer');
-            svg.innerHTML = '';
-            
-            // Draw lines between cards in sequence
-            for (let i = 0; i < cards.length - 1; i++) {
-                const card1 = cards[i];
-                const card2 = cards[i + 1];
-                
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const x1 = card1.x + 128;
-                const y1 = card1.y + 50;
-                const x2 = card2.x + 128;
-                const y2 = card2.y + 50;
-                
-                const midX = (x1 + x2) / 2;
-                const path = `M ${x1} ${y1} Q ${midX} ${y1} ${midX} ${(y1+y2)/2} T ${x2} ${y2}`;
-                
-                line.setAttribute('d', path);
-                line.setAttribute('class', 'connection-line');
-                svg.appendChild(line);
-            }
-        }
-
-        // Timeline View
-        function renderTimeline() {
-            const container = document.getElementById('timelineContainer');
-            container.innerHTML = '';
-            
-            cards.forEach((card, index) => {
-                const item = document.createElement('div');
-                item.className = 'relative';
-                item.innerHTML = `
-                    <div class="absolute -left-12 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold border-4 border-slate-900">
-                        ${index + 1}
-                    </div>
-                    <div class="glass-panel rounded-xl p-6 border border-white/10 hover:border-purple-500/30 transition">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-display text-lg text-white">${card.title}</h3>
-                            <span class="text-xs px-2 py-1 rounded-full bg-white/10 text-gray-300">${card.mood}</span>
-                        </div>
-                        <p class="text-gray-400 text-sm mb-3">${card.content}</p>
-                        <div class="flex gap-2">
-                            ${card.tags.map(tag => `<span class="text-xs text-purple-300">#${tag}</span>`).join('')}
-                        </div>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        // Character Management
-        function openCharacterModal() {
-            document.getElementById('characterModal').classList.remove('hidden');
-        }
-
-        function saveCharacter() {
-            closeModal('characterModal');
-            showToast('Character saved');
-            // Add character to grid logic here
-        }
-
-        // Music System
-        function toggleMusic(mood) {
-            document.querySelectorAll('.mood-track').forEach(btn => {
-                btn.classList.remove('bg-purple-600', 'text-white');
-                btn.classList.add('bg-white/5');
-            });
-            
-            if (event.target.classList.contains('mood-track')) {
-                event.target.classList.remove('bg-white/5');
-                event.target.classList.add('bg-purple-600', 'text-white');
             }
             
-            if (!isPlaying) {
-                togglePlay();
-            }
-            
-            showToast(`Playing ${mood} ambience`);
+            localStorage.setItem('storyweave_stories', JSON.stringify(AppState.stories));
         }
 
-        function togglePlay() {
-            isPlaying = !isPlaying;
-            const btn = document.getElementById('playBtn');
-            const visualizer = document.getElementById('visualizer');
-            
-            if (isPlaying) {
-                btn.innerHTML = '<i class="fas fa-pause text-xs"></i>';
-                visualizer.style.opacity = '1';
-                // Simulate audio visualization
-                setInterval(() => {
-                    if (isPlaying) {
-                        document.querySelectorAll('.music-bar').forEach(bar => {
-                            bar.style.height = (20 + Math.random() * 80) + '%';
-                        });
-                    }
-                }, 200);
-            } else {
-                btn.innerHTML = '<i class="fas fa-play text-xs"></i>';
-                visualizer.style.opacity = '0.3';
-            }
+        function loadFromLocalStorage() {
+            // Stories are loaded per user in showApp()
         }
 
-        // Utilities
+        // Toast System
         function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMessage').textContent = message;
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
             
-            if (type === 'error') {
-                toast.classList.remove('bg-purple-600');
-                toast.classList.add('bg-red-600');
-            } else {
-                toast.classList.remove('bg-red-600');
-                toast.classList.add('bg-purple-600');
-            }
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
             
-            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.innerHTML = `<i class="fas ${icons[type]}"></i> ${message}`;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        function saveStory() {
-            // Simulate save
-            showToast('Story saved to cloud');
-        }
-
-        function openShareModal() {
-            document.getElementById('shareModal').classList.remove('hidden');
-        }
-
-        function editTitle() {
-            const title = prompt('Enter story title:', document.getElementById('pageTitle').textContent);
-            if (title) {
-                document.getElementById('pageTitle').textContent = title;
-            }
-        }
-
-        function changeMood(filter) {
-            // Filter cards by mood
-            const allCards = document.querySelectorAll('.story-card');
-            allCards.forEach(card => {
-                const cardData = cards.find(c => c.id === parseInt(card.dataset.id));
-                if (filter === 'all' || cardData.mood === filter) {
-                    card.style.opacity = '1';
-                    card.style.transform = 'scale(1)';
-                } else {
-                    card.style.opacity = '0.3';
-                    card.style.transform = 'scale(0.95)';
-                }
-            });
-        }
-
-        function deleteCard(id) {
-            if (confirm('Delete this card?')) {
-                cards = cards.filter(c => c.id !== id);
-                document.querySelector(`[data-id="${id}"]`).remove();
-                updateConnections();
-                if (cards.length === 0) {
-                    document.getElementById('emptyState').style.display = 'flex';
-                }
-            }
-        }
-
-        function editCard(id) {
-            // Edit functionality
-            showToast('Edit mode activated');
-        }
-
         // Keyboard Shortcuts
-        document.addEventListener('keydown', (e) => {
+        function handleKeyboard(e) {
             if (e.key === 'Escape') {
-                closeModal('cardModal');
-                closeModal('shareModal');
-                closeModal('characterModal');
+                ['cardModal', 'characterModal', 'shareModal'].forEach(closeModal);
             }
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                saveStory();
+            
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 's') {
+                    e.preventDefault();
+                    saveCurrentStory();
+                }
+                if (e.key === 'n') {
+                    e.preventDefault();
+                    openCardModal();
+                }
             }
-            if (e.ctrlKey && e.key === 'n') {
-                e.preventDefault();
-                openCardModal();
+        }
+
+        // Background Particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 20 + 's';
+                p.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(p);
             }
-        });
+        }
     </script>
 </body>
 </html>
