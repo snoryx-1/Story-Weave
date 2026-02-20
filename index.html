@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryWeave - Visual Story Planning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --darker: #020617;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--darker);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        
+        .font-display { font-family: 'Cinzel', serif; }
+        .font-hand { font-family: 'Caveat', cursive; }
+        
+        /* Animated Background */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--darker);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+        
+        /* Timeline */
+        .timeline-line {
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+        
+        /* Card Hover Effects */
+        .story-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .story-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+        }
+        
+        /* Music Visualizer Bars */
+        .music-bar {
+            width: 4px;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 2px;
+            animation: equalize 1s ease-in-out infinite;
+        }
+        
+        @keyframes equalize {
+            0%, 100% { height: 20%; }
+            50% { height: 100%; }
+        }
+        
+        .music-bar:nth-child(2) { animation-delay: 0.1s; }
+        .music-bar:nth-child(3) { animation-delay: 0.2s; }
+        .music-bar:nth-child(4) { animation-delay: 0.3s; }
+        .music-bar:nth-child(5) { animation-delay: 0.4s; }
+        
+        /* Modal Animation */
+        .modal-enter {
+            animation: modalSlide 0.3s ease-out;
+        }
+        @keyframes modalSlide {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        /* Connection Lines */
+        .connection-line {
+            stroke: var(--primary);
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 5,5;
+            animation: dash 20s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: -100; }
+        }
+        
+        /* Mood Selector */
+        .mood-btn {
+            transition: all 0.2s;
+        }
+        .mood-btn.active {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+        
+        /* Drag and Drop */
+        .draggable {
+            cursor: move;
+        }
+        .dragging {
+            opacity: 0.5;
+        }
+        .drop-zone {
+            border: 2px dashed var(--primary);
+            background: rgba(139, 92, 246, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen relative">
+
+    <!-- Animated Background -->
+    <div class="bg-particles" id="particles"></div>
+
+    <!-- Main App Container -->
+    <div class="relative z-10 flex h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 glass border-r border-white/10 flex flex-col">
+            <div class="p-6 border-b border-white/10">
+                <h1 class="text-2xl font-display font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    <i class="fas fa-feather-alt mr-2"></i>StoryWeave
+                </h1>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="switchView('canvas')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition flex items-center gap-3 text-purple-300 bg-white/5">
+                    <i class="fas fa-project-diagram"></i> Story Canvas
+                </button>
+                <button onclick="switchView('timeline')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition flex items-center gap-3 text-gray-400">
+                    <i class="fas fa-stream"></i> Timeline View
+                </button>
+                <button onclick="switchView('characters')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition flex items-center gap-3 text-gray-400">
+                    <i class="fas fa-users"></i> Characters
+                </button>
+                <button onclick="switchView('archive')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition flex items-center gap-3 text-gray-400">
+                    <i class="fas fa-archive"></i> Archive
+                </button>
+            </nav>
+
+            <!-- Music Player Widget -->
+            <div class="p-4 border-t border-white/10">
+                <div class="glass-panel rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold text-purple-300 uppercase tracking-wider">Ambience</span>
+                        <div class="flex gap-1 h-4 items-end" id="visualizer">
+                            <div class="music-bar" style="height: 40%"></div>
+                            <div class="music-bar" style="height: 70%"></div>
+                            <div class="music-bar" style="height: 50%"></div>
+                            <div class="music-bar" style="height: 80%"></div>
+                            <div class="music-bar" style="height: 60%"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="toggleMusic('focus')" class="mood-track w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 text-sm transition flex items-center gap-2">
+                            <i class="fas fa-moon text-blue-400"></i> Deep Focus
+                        </button>
+                        <button onclick="toggleMusic('tension')" class="mood-track w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 text-sm transition flex items-center gap-2">
+                            <i class="fas fa-bolt text-yellow-400"></i> Building Tension
+                        </button>
+                        <button onclick="toggleMusic('emotional')" class="mood-track w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 text-sm transition flex items-center gap-2">
+                            <i class="fas fa-heart text-pink-400"></i> Emotional Core
+                        </button>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2">
+                        <button onclick="togglePlay()" id="playBtn" class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center hover:bg-purple-500 transition">
+                            <i class="fas fa-play text-xs"></i>
+                        </button>
+                        <input type="range" min="0" max="100" value="50" class="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="glass border-b border-white/10 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <h2 id="pageTitle" class="text-xl font-display text-white">Untitled Story</h2>
+                    <button onclick="editTitle()" class="text-gray-400 hover:text-white transition">
+                        <i class="fas fa-pen text-xs"></i>
+                    </button>
+                    <span class="px-2 py-1 rounded bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">Draft</span>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <button onclick="openShareModal()" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-2 text-sm">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                    <button onclick="saveStory()" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition flex items-center gap-2 text-sm font-semibold shadow-lg shadow-purple-600/20">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold">
+                        ME
+                    </div>
+                </div>
+            </header>
+
+            <!-- Canvas Area -->
+            <div class="flex-1 overflow-auto p-8 relative" id="mainCanvas">
+                
+                <!-- Canvas View -->
+                <div id="canvasView" class="min-h-full">
+                    <div class="mb-6 flex items-center justify-between">
+                        <div class="flex gap-2">
+                            <button onclick="setTool('select')" class="tool-btn active px-4 py-2 rounded-lg bg-purple-600 text-white text-sm flex items-center gap-2">
+                                <i class="fas fa-mouse-pointer"></i> Select
+                            </button>
+                            <button onclick="setTool('card')" class="tool-btn px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-sm flex items-center gap-2">
+                                <i class="fas fa-plus"></i> Add Card
+                            </button>
+                            <button onclick="setTool('connect')" class="tool-btn px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-sm flex items-center gap-2">
+                                <i class="fas fa-link"></i> Connect
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <select onchange="changeMood(this.value)" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-purple-500">
+                                <option value="all">All Moods</option>
+                                <option value="happy">Joyful</option>
+                                <option value="sad">Melancholy</option>
+                                <option value="tense">Tense</option>
+                                <option value="mysterious">Mysterious</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Infinite Canvas -->
+                    <div class="relative w-full h-[800px] glass-panel rounded-2xl overflow-hidden" id="canvasContainer">
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" id="connectionsLayer"></svg>
+                        <div class="absolute inset-0 p-8" id="cardsContainer">
+                            <!-- Cards will be dynamically added here -->
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="emptyState" class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center text-gray-500">
+                                <i class="fas fa-lightbulb text-4xl mb-4 opacity-50"></i>
+                                <p class="font-hand text-2xl">Click "Add Card" to begin your story...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline View (Hidden by default) -->
+                <div id="timelineView" class="hidden max-w-4xl mx-auto">
+                    <div class="relative">
+                        <div class="absolute left-8 top-0 bottom-0 w-1 timeline-line rounded-full"></div>
+                        <div id="timelineContainer" class="space-y-8 pl-20 py-8">
+                            <!-- Timeline items will be added here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Characters View (Hidden by default) -->
+                <div id="charactersView" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="charactersGrid">
+                        <button onclick="openCharacterModal()" class="glass-panel rounded-xl p-8 border-dashed border-2 border-purple-500/30 hover:border-purple-500/60 transition flex flex-col items-center justify-center gap-4 text-gray-400 hover:text-purple-300 min-h-[300px]">
+                            <i class="fas fa-plus text-3xl"></i>
+                            <span class="font-hand text-xl">Create Character</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Card Modal -->
+    <div id="cardModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl w-full max-w-lg modal-enter border border-white/20 shadow-2xl shadow-purple-900/20">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 class="text-xl font-display text-white">Story Beat</h3>
+                <button onclick="closeModal('cardModal')" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Title</label>
+                    <input type="text" id="cardTitle" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition" placeholder="e.g., The Inciting Incident">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Content</label>
+                    <textarea id="cardContent" rows="4" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition resize-none" placeholder="What happens in this scene?"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Mood</label>
+                    <div class="flex gap-3">
+                        <button onclick="selectMood('happy')" class="mood-btn w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 flex items-center justify-center" data-mood="happy">😊</button>
+                        <button onclick="selectMood('sad')" class="mood-btn w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/50 text-blue-400 flex items-center justify-center" data-mood="sad">😢</button>
+                        <button onclick="selectMood('tense')" class="mood-btn w-10 h-10 rounded-full bg-red-500/20 border border-red-500/50 text-red-400 flex items-center justify-center" data-mood="tense">😰</button>
+                        <button onclick="selectMood('mysterious')" class="mood-btn w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/50 text-purple-400 flex items-center justify-center" data-mood="mysterious">🌙</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Tags</label>
+                    <input type="text" id="cardTags" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 transition text-sm" placeholder="Add tags separated by commas">
+                </div>
+            </div>
+            <div class="p-6 border-t border-white/10 flex justify-end gap-3">
+                <button onclick="closeModal('cardModal')" class="px-4 py-2 rounded-lg text-gray-400 hover:text-white transition">Cancel</button>
+                <button onclick="saveCard()" class="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold transition shadow-lg shadow-purple-600/20">Add to Canvas</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl w-full max-w-md modal-enter border border-white/20">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 class="text-xl font-display text-white">Share Story</h3>
+                <button onclick="closeModal('shareModal')" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex gap-2">
+                    <input type="text" value="https://storyweave.app/s/story-123" readonly class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-gray-400 text-sm">
+                    <button class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-white">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm text-gray-400">Permissions</label>
+                    <select class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm">
+                        <option>Can view</option>
+                        <option>Can comment</option>
+                        <option>Can edit</option>
+                    </select>
+                </div>
+                <div class="pt-4 flex gap-3">
+                    <button class="flex-1 py-3 rounded-lg bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 text-[#1DA1F2] hover:bg-[#1DA1F2]/30 transition flex items-center justify-center gap-2">
+                        <i class="fab fa-twitter"></i> Tweet
+                    </button>
+                    <button class="flex-1 py-3 rounded-lg bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#5865F2] hover:bg-[#5865F2]/30 transition flex items-center justify-center gap-2">
+                        <i class="fab fa-discord"></i> Discord
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Character Modal -->
+    <div id="characterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl w-full max-w-2xl modal-enter border border-white/20 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 class="text-xl font-display text-white">Character Profile</h3>
+                <button onclick="closeModal('characterModal')" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="space-y-4">
+                    <div class="aspect-square rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10 flex items-center justify-center text-4xl">
+                        <i class="fas fa-user text-gray-400"></i>
+                    </div>
+                    <button class="w-full py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-gray-300 transition">
+                        Upload Portrait
+                    </button>
+                </div>
+                <div class="md:col-span-2 space-y-4">
+                    <input type="text" placeholder="Character Name" class="w-full bg-transparent border-b border-white/20 py-2 text-2xl font-display text-white focus:outline-none focus:border-purple-500 transition">
+                    <input type="text" placeholder="Role (Protagonist, Antagonist, etc.)" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 transition">
+                    <textarea placeholder="Backstory and motivations..." rows="4" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition resize-none"></textarea>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" placeholder="Age" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 transition">
+                        <input type="text" placeholder="Occupation" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 transition">
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-white/10 flex justify-end gap-3">
+                <button onclick="closeModal('characterModal')" class="px-4 py-2 rounded-lg text-gray-400 hover:text-white transition">Cancel</button>
+                <button onclick="saveCharacter()" class="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold transition shadow-lg shadow-purple-600/20">Save Character</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Saved successfully!</span>
+    </div>
+
+    <script>
+        // State Management
+        let currentTool = 'select';
+        let cards = [];
+        let characters = [];
+        let currentMood = null;
+        let isPlaying = false;
+        let currentView = 'canvas';
+        let draggedCard = null;
+        let selectedCard = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            loadDemoData();
+            setupDragAndDrop();
+        });
+
+        // Create Background Particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Demo Data
+        function loadDemoData() {
+            // Add sample cards
+            addCardToCanvas({
+                id: 1,
+                title: "The Ordinary World",
+                content: "Our hero lives a mundane life, unaware of the adventure that awaits...",
+                x: 100,
+                y: 100,
+                mood: 'happy',
+                tags: ['setup', 'introduction']
+            });
+            
+            addCardToCanvas({
+                id: 2,
+                title: "Call to Adventure",
+                content: "A mysterious letter arrives, changing everything.",
+                x: 400,
+                y: 100,
+                mood: 'mysterious',
+                tags: ['inciting incident']
+            });
+            
+            addCardToCanvas({
+                id: 3,
+                title: "Refusal of the Call",
+                content: "Fear and doubt cloud the hero's mind.",
+                x: 700,
+                y: 250,
+                mood: 'sad',
+                tags: ['conflict']
+            });
+
+            updateConnections();
+        }
+
+        // View Switching
+        function switchView(view) {
+            currentView = view;
+            
+            // Hide all views
+            document.getElementById('canvasView').classList.add('hidden');
+            document.getElementById('timelineView').classList.add('hidden');
+            document.getElementById('charactersView').classList.add('hidden');
+            
+            // Show selected view
+            document.getElementById(view + 'View').classList.remove('hidden');
+            
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-purple-300', 'bg-white/5');
+                btn.classList.add('text-gray-400');
+            });
+            event.target.classList.remove('text-gray-400');
+            event.target.classList.add('text-purple-300', 'bg-white/5');
+            
+            if (view === 'timeline') renderTimeline();
+        }
+
+        // Tool Management
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('bg-white/5', 'text-gray-300');
+            });
+            event.target.classList.remove('bg-white/5', 'text-gray-300');
+            event.target.classList.add('bg-purple-600', 'text-white');
+            
+            if (tool === 'card') openCardModal();
+        }
+
+        // Card Modal
+        function openCardModal() {
+            document.getElementById('cardModal').classList.remove('hidden');
+            document.getElementById('cardTitle').value = '';
+            document.getElementById('cardContent').value = '';
+            document.getElementById('cardTags').value = '';
+            currentMood = null;
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function selectMood(mood) {
+            currentMood = mood;
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mood === mood) btn.classList.add('active');
+            });
+        }
+
+        function saveCard() {
+            const title = document.getElementById('cardTitle').value;
+            const content = document.getElementById('cardContent').value;
+            const tags = document.getElementById('cardTags').value.split(',').map(t => t.trim()).filter(t => t);
+            
+            if (!title) return showToast('Please enter a title', 'error');
+            
+            const card = {
+                id: Date.now(),
+                title,
+                content,
+                mood: currentMood || 'neutral',
+                tags,
+                x: 100 + Math.random() * 200,
+                y: 100 + Math.random() * 200
+            };
+            
+            cards.push(card);
+            addCardToCanvas(card);
+            closeModal('cardModal');
+            showToast('Card added to canvas');
+            
+            // Reset tool to select
+            setTool('select');
+        }
+
+        function addCardToCanvas(cardData) {
+            document.getElementById('emptyState').style.display = 'none';
+            
+            const card = document.createElement('div');
+            card.className = 'story-card absolute w-64 glass-panel rounded-xl p-4 border border-white/10 cursor-move';
+            card.style.left = cardData.x + 'px';
+            card.style.top = cardData.y + 'px';
+            card.dataset.id = cardData.id;
+            card.draggable = true;
+            
+            const moodColors = {
+                happy: 'border-yellow-500/30 bg-yellow-500/5',
+                sad: 'border-blue-500/30 bg-blue-500/5',
+                tense: 'border-red-500/30 bg-red-500/5',
+                mysterious: 'border-purple-500/30 bg-purple-500/5',
+                neutral: 'border-white/10'
+            };
+            
+            card.classList.add(...(moodColors[cardData.mood] || moodColors.neutral).split(' '));
+            
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="font-bold text-white text-sm">${cardData.title}</h4>
+                    <button onclick="deleteCard(${cardData.id})" class="text-gray-500 hover:text-red-400 transition">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+                <p class="text-gray-400 text-xs mb-3 line-clamp-3">${cardData.content}</p>
+                <div class="flex flex-wrap gap-1">
+                    ${cardData.tags.map(tag => `<span class="px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-gray-300">#${tag}</span>`).join('')}
+                </div>
+                <div class="mt-3 pt-2 border-t border-white/10 flex justify-between items-center">
+                    <span class="text-[10px] text-gray-500">${cardData.mood}</span>
+                    <button onclick="editCard(${cardData.id})" class="text-[10px] text-purple-400 hover:text-purple-300">Edit</button>
+                </div>
+            `;
+            
+            // Drag events
+            card.addEventListener('dragstart', (e) => {
+                draggedCard = card;
+                card.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                draggedCard = null;
+                updateConnections();
+            });
+            
+            document.getElementById('cardsContainer').appendChild(card);
+        }
+
+        // Drag and Drop Setup
+        function setupDragAndDrop() {
+            const container = document.getElementById('canvasContainer');
+            
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (draggedCard) {
+                    const rect = container.getBoundingClientRect();
+                    const x = e.clientX - rect.left - 128; // Center card
+                    const y = e.clientY - rect.top - 20;
+                    
+                    draggedCard.style.left = x + 'px';
+                    draggedCard.style.top = y + 'px';
+                    
+                    // Update data
+                    const id = parseInt(draggedCard.dataset.id);
+                    const cardData = cards.find(c => c.id === id);
+                    if (cardData) {
+                        cardData.x = x;
+                        cardData.y = y;
+                    }
+                }
+            });
+        }
+
+        // Connections
+        function updateConnections() {
+            const svg = document.getElementById('connectionsLayer');
+            svg.innerHTML = '';
+            
+            // Draw lines between cards in sequence
+            for (let i = 0; i < cards.length - 1; i++) {
+                const card1 = cards[i];
+                const card2 = cards[i + 1];
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const x1 = card1.x + 128;
+                const y1 = card1.y + 50;
+                const x2 = card2.x + 128;
+                const y2 = card2.y + 50;
+                
+                const midX = (x1 + x2) / 2;
+                const path = `M ${x1} ${y1} Q ${midX} ${y1} ${midX} ${(y1+y2)/2} T ${x2} ${y2}`;
+                
+                line.setAttribute('d', path);
+                line.setAttribute('class', 'connection-line');
+                svg.appendChild(line);
+            }
+        }
+
+        // Timeline View
+        function renderTimeline() {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = '';
+            
+            cards.forEach((card, index) => {
+                const item = document.createElement('div');
+                item.className = 'relative';
+                item.innerHTML = `
+                    <div class="absolute -left-12 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold border-4 border-slate-900">
+                        ${index + 1}
+                    </div>
+                    <div class="glass-panel rounded-xl p-6 border border-white/10 hover:border-purple-500/30 transition">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-display text-lg text-white">${card.title}</h3>
+                            <span class="text-xs px-2 py-1 rounded-full bg-white/10 text-gray-300">${card.mood}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-3">${card.content}</p>
+                        <div class="flex gap-2">
+                            ${card.tags.map(tag => `<span class="text-xs text-purple-300">#${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Character Management
+        function openCharacterModal() {
+            document.getElementById('characterModal').classList.remove('hidden');
+        }
+
+        function saveCharacter() {
+            closeModal('characterModal');
+            showToast('Character saved');
+            // Add character to grid logic here
+        }
+
+        // Music System
+        function toggleMusic(mood) {
+            document.querySelectorAll('.mood-track').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('bg-white/5');
+            });
+            
+            if (event.target.classList.contains('mood-track')) {
+                event.target.classList.remove('bg-white/5');
+                event.target.classList.add('bg-purple-600', 'text-white');
+            }
+            
+            if (!isPlaying) {
+                togglePlay();
+            }
+            
+            showToast(`Playing ${mood} ambience`);
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const btn = document.getElementById('playBtn');
+            const visualizer = document.getElementById('visualizer');
+            
+            if (isPlaying) {
+                btn.innerHTML = '<i class="fas fa-pause text-xs"></i>';
+                visualizer.style.opacity = '1';
+                // Simulate audio visualization
+                setInterval(() => {
+                    if (isPlaying) {
+                        document.querySelectorAll('.music-bar').forEach(bar => {
+                            bar.style.height = (20 + Math.random() * 80) + '%';
+                        });
+                    }
+                }, 200);
+            } else {
+                btn.innerHTML = '<i class="fas fa-play text-xs"></i>';
+                visualizer.style.opacity = '0.3';
+            }
+        }
+
+        // Utilities
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            
+            if (type === 'error') {
+                toast.classList.remove('bg-purple-600');
+                toast.classList.add('bg-red-600');
+            } else {
+                toast.classList.remove('bg-red-600');
+                toast.classList.add('bg-purple-600');
+            }
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function saveStory() {
+            // Simulate save
+            showToast('Story saved to cloud');
+        }
+
+        function openShareModal() {
+            document.getElementById('shareModal').classList.remove('hidden');
+        }
+
+        function editTitle() {
+            const title = prompt('Enter story title:', document.getElementById('pageTitle').textContent);
+            if (title) {
+                document.getElementById('pageTitle').textContent = title;
+            }
+        }
+
+        function changeMood(filter) {
+            // Filter cards by mood
+            const allCards = document.querySelectorAll('.story-card');
+            allCards.forEach(card => {
+                const cardData = cards.find(c => c.id === parseInt(card.dataset.id));
+                if (filter === 'all' || cardData.mood === filter) {
+                    card.style.opacity = '1';
+                    card.style.transform = 'scale(1)';
+                } else {
+                    card.style.opacity = '0.3';
+                    card.style.transform = 'scale(0.95)';
+                }
+            });
+        }
+
+        function deleteCard(id) {
+            if (confirm('Delete this card?')) {
+                cards = cards.filter(c => c.id !== id);
+                document.querySelector(`[data-id="${id}"]`).remove();
+                updateConnections();
+                if (cards.length === 0) {
+                    document.getElementById('emptyState').style.display = 'flex';
+                }
+            }
+        }
+
+        function editCard(id) {
+            // Edit functionality
+            showToast('Edit mode activated');
+        }
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal('cardModal');
+                closeModal('shareModal');
+                closeModal('characterModal');
+            }
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveStory();
+            }
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                openCardModal();
+            }
+        });
+    </script>
+</body>
+</html>
